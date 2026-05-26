@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Filiz — Birlikte Büyü. Eşleş, ortak sanal ağacınızı büyütün, günlük ritüelleri ve duygularınızı paylaşın." />
+  <meta name="theme-color" content="#0D0F1A" />
+  <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta name="robots" content="index, follow" />
+  <title>Filiz — Birlikte Büyü</title>
+  <script>
+  (function () {
+    "use strict";
+    var n = function () {};
+    var trap = {
+      log: n, debug: n, info: n, warn: n, error: n, table: n, trace: n,
+      dir: n, clear: n, group: n, groupCollapsed: n, groupEnd: n, assert: n, count: n
+    };
+    try {
+      Object.defineProperty(window, "console", { get: function () { return trap; }, configurable: false });
+    } catch (e) {
+      var c = window.console;
+      for (var k in trap) { try { c[k] = n; } catch (e2) {} }
+    }
+    document.addEventListener("contextmenu", function (e) { e.preventDefault(); }, true);
+    document.addEventListener("keydown", function (e) {
+      var key = (e.key || "").toLowerCase();
+      if (key === "f12") { e.preventDefault(); return false; }
+      if (e.ctrlKey && e.shiftKey && /^(i|j|c|k|u)$/.test(key)) { e.preventDefault(); return false; }
+      if (e.ctrlKey && /^(u|s|p)$/.test(key)) { e.preventDefault(); return false; }
+      if (e.metaKey && e.altKey && key === "i") { e.preventDefault(); return false; }
+    }, true);
+    document.addEventListener("copy", function (e) {
+      if (document.getElementById("admin-panel") && document.getElementById("admin-panel").classList.contains("open")) {
+        e.preventDefault();
+      }
+    }, true);
+    document.addEventListener("selectstart", function (e) {
+      var t = e.target;
+      if (t && t.closest && t.closest("#admin-panel, #pin-overlay, .overlay.open")) { e.preventDefault(); }
+    }, true);
+    var devOpen = false;
+    function probeDevtools() {
+      var gap = Math.abs((window.outerWidth || 0) - (window.innerWidth || 0));
+      var gapY = Math.abs((window.outerHeight || 0) - (window.innerHeight || 0));
+      var open = gap > 160 || gapY > 160;
+      if (open && !devOpen) {
+        devOpen = true;
+        document.body.classList.add("devtools-block");
+        try { sessionStorage.removeItem("filiz_admin_sess"); sessionStorage.removeItem("filiz_admin_pin_x"); } catch (e3) {}
+        var ap = document.getElementById("admin-panel");
+        if (ap && ap.classList.contains("open")) {
+          ap.classList.remove("open");
+          var land = document.getElementById("landing");
+          if (land) land.classList.remove("hidden");
+        }
+      } else if (!open) {
+        devOpen = false;
+        document.body.classList.remove("devtools-block");
+      }
+    }
+    setInterval(probeDevtools, 800);
+    window.addEventListener("resize", probeDevtools);
+    window.addEventListener("blur", function () {
+      if (document.getElementById("admin-panel") && document.getElementById("admin-panel").classList.contains("open")) {
+        probeDevtools();
+      }
+    });
+  })();
+  </script>
+  <style>
+    :root {
+      --bg: #0D0F1A;
+      --bg2: #12162a;
+      --card: #161a2e;
+      --border: #2a3048;
+      --text: #e8eaf0;
+      --muted: #9aa3b5;
+      --accent: #39FF14;
+      --accent-dim: rgba(57, 255, 20, 0.15);
+      --pink: #ff6b9d;
+      --blue: #5eb3ff;
+      --gold: #ffc857;
+      --danger: #ff5252;
+      --radius: 16px;
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    body.allow-select, body.allow-select .legal-strip,
+    body.allow-select .hero, body.allow-select .feature-card p,
+    body.allow-select .legal-links a { -webkit-user-select: text; user-select: text; }
+    body.devtools-block::before {
+      content: "";
+      position: fixed; inset: 0; z-index: 99999;
+      background: #0D0F1A;
+    }
+    body.devtools-block::after {
+      content: "Güvenlik nedeniyle bu görünüm kapatıldı.";
+      position: fixed; inset: 0; z-index: 100000;
+      display: flex; align-items: center; justify-content: center;
+      color: #9aa3b5; font-size: 0.95rem; text-align: center; padding: 24px;
+    }
+    #admin-panel, #pin-overlay, #issue-overlay { -webkit-user-select: none; user-select: none; }
+    #admin-panel input, #admin-panel textarea, #pin-overlay input, #issue-overlay input {
+      -webkit-user-select: text; user-select: text;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+    /* Landing */
+    .site-header {
+      position: sticky; top: 0; z-index: 10;
+      backdrop-filter: blur(12px);
+      background: rgba(13, 15, 26, 0.85);
+      border-bottom: 1px solid var(--border);
+    }
+    .site-header .wrap {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; gap: 16px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.1rem; color: var(--text); text-decoration: none; }
+    .logo span { font-size: 1.5rem; }
+    .nav-links { display: flex; gap: 20px; flex-wrap: wrap; }
+    .nav-links a { color: var(--muted); font-size: 0.9rem; text-decoration: none; }
+    .nav-links a:hover { color: var(--accent); }
+
+    .hero {
+      padding: 56px 0 48px;
+      text-align: center;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(57, 255, 20, 0.12), transparent),
+        radial-gradient(ellipse 40% 30% at 90% 20%, rgba(94, 179, 255, 0.08), transparent),
+        radial-gradient(ellipse 40% 30% at 10% 30%, rgba(255, 107, 157, 0.08), transparent);
+    }
+    .hero-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      line-height: 1.15;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero .tagline { font-size: 1.15rem; color: var(--muted); max-width: 560px; margin: 0 auto 32px; }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 14px 28px; border-radius: 12px; font-weight: 600; font-size: 1rem;
+      border: none; cursor: pointer; text-decoration: none; transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary {
+      background: var(--accent); color: #0a0f0a;
+      box-shadow: 0 0 24px rgba(57, 255, 20, 0.35);
+    }
+    .btn-primary:hover { box-shadow: 0 0 32px rgba(57, 255, 20, 0.5); text-decoration: none; }
+    .btn-ghost {
+      background: transparent; color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); text-decoration: none; }
+
+    section { padding: 48px 0; }
+    section h2 {
+      text-align: center; font-size: 1.6rem; margin-bottom: 8px; color: var(--accent);
+    }
+    section .sub { text-align: center; color: var(--muted); margin-bottom: 32px; max-width: 520px; margin-left: auto; margin-right: auto; }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      transition: border-color 0.2s;
+    }
+    .feature-card:hover { border-color: rgba(57, 255, 20, 0.4); }
+    .feature-card .icon { font-size: 2rem; margin-bottom: 12px; }
+    .feature-card h3 { font-size: 1.05rem; margin-bottom: 8px; }
+    .feature-card p { color: var(--muted); font-size: 0.9rem; }
+
+    .tree-levels {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+      margin-top: 24px;
+    }
+    .tree-pill {
+      padding: 8px 14px; border-radius: 999px;
+      background: var(--accent-dim); border: 1px solid rgba(57, 255, 20, 0.3);
+      font-size: 0.85rem; color: var(--accent);
+    }
+
+    .legal-strip {
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 28px 0;
+      text-align: center;
+    }
+    .legal-strip p { color: var(--muted); font-size: 0.9rem; margin-bottom: 12px; }
+    .legal-links { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
+
+    .site-footer {
+      padding: 32px 0 48px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .version-foot {
+      margin-top: 16px;
+      opacity: 0.35;
+      cursor: default;
+      user-select: none;
+      font-size: 0.75rem;
+    }
+
+    /* Modals */
+    .overlay {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0, 0, 0, 0.7);
+      display: none; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 100%; max-width: 360px;
+    }
+    .modal h3 { margin-bottom: 16px; }
+    .modal input {
+      width: 100%; padding: 12px; border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg); color: var(--text);
+      font-size: 1.2rem; text-align: center; letter-spacing: 0.3em;
+    }
+    .modal-actions { display: flex; gap: 10px; margin-top: 16px; }
+    .modal-actions .btn { flex: 1; padding: 12px; font-size: 0.9rem; }
+
+    /* Admin panel */
+    #admin-panel {
+      display: none;
+      position: fixed; inset: 0; z-index: 50;
+      background: linear-gradient(180deg, #0D0F1A 0%, #0F1530 50%, #0D0F1A 100%);
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #admin-panel.open { display: flex; }
+    .admin-top {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .admin-top h1 { flex: 1; text-align: center; font-size: 1.1rem; }
+    .admin-top button {
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 1rem; padding: 8px;
+    }
+    .admin-scroll {
+      flex: 1; overflow-y: auto;
+      padding: 16px 20px 40px;
+    }
+    .admin-scroll .section-h {
+      color: var(--accent);
+      font-size: 1rem;
+      margin: 20px 0 12px;
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: 1fr; }
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+    }
+    .stat-card .val { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+    .stat-card .lbl { font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+    .hint { font-size: 0.75rem; color: var(--muted); line-height: 1.5; margin-top: 10px; }
+
+    .acc {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .acc-h {
+      width: 100%; text-align: left;
+      background: var(--card);
+      border: none; color: var(--text);
+      padding: 14px 16px;
+      cursor: pointer;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 10px;
+      font-size: 0.95rem; font-weight: 600;
+    }
+    .acc-h small { color: var(--muted); font-weight: 400; font-size: 0.75rem; display: block; margin-top: 4px; }
+    .acc-b { display: none; padding: 0 16px 16px; }
+    .acc.open .acc-b { display: block; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    label.field-label {
+      display: block; font-size: 0.75rem; color: var(--muted);
+      margin: 10px 0 4px;
+    }
+    input[type="text"], input[type="url"], input[type="email"], input[type="number"], textarea, select {
+      width: 100%; padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      font: inherit; font-size: 0.9rem;
+    }
+    textarea { min-height: 120px; resize: vertical; }
+    .row-flex { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .switch-wrap { display: flex; justify-content: space-between; align-items: center; margin: 8px 0; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+    .dot.ok { background: var(--accent); }
+    .dot.fail { background: var(--danger); }
+    .dot.wait { background: #ffa726; }
+
+    .btn-sm {
+      padding: 10px 14px; font-size: 0.85rem;
+      border-radius: 10px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted);
+      cursor: pointer; width: 100%; margin-top: 8px;
+    }
+    .btn-sm.primary { background: var(--accent); color: #0a0f0a; border-color: var(--accent); font-weight: 600; }
+    .btn-sm.danger { border-color: var(--danger); color: var(--danger); }
+    .btn-sm.gold { background: var(--gold); color: #1a1200; border-color: var(--gold); font-weight: 600; }
+
+    .device-row {
+      padding: 10px; border-radius: 10px;
+      border: 1px solid var(--border);
+      margin-bottom: 8px; font-size: 0.85rem;
+    }
+    .device-row strong { display: block; }
+    .device-row span { color: var(--muted); font-size: 0.75rem; }
+
+    .pin-warn {
+      background: rgba(255, 82, 82, 0.1);
+      border: 1px solid var(--danger);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+      display: none;
+    }
+    .pin-warn.show { display: block; }
+
+    .code-row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 10px; padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .loading { text-align: center; padding: 20px; color: var(--muted); }
+
+    #landing.hidden { display: none; }
+  </style>
+</head>
+<body class="allow-select">
+  <div id="landing">
+    <header class="site-header">
+      <div class="wrap">
+        <a class="logo" href="#"><span>🌱</span> Filiz</a>
+        <nav class="nav-links">
+          <a href="#ozellikler">Özellikler</a>
+          <a href="#nasil">Nasıl çalışır</a>
+          <a href="#yasal">Yasal</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="wrap">
+          <div class="hero-badge">Aile &amp; çift — duygusal refah</div>
+          <h1>Filiz — Birlikte Büyü</h1>
+          <p class="tagline">Eşleş · Birlikte ağacınızı büyütün · Duygularınızı paylaşın</p>
+          <div class="cta-row">
+            <a class="btn btn-primary" id="play-link" href="https://play.google.com/store/apps/details?id=com.altun.filiz" rel="noopener">
+              Google Play'den indir
+            </a>
+            <a class="btn btn-ghost" href="#ozellikler">Özellikleri keşfet</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="ozellikler">
+        <div class="wrap">
+          <h2>Uygulamada neler var?</h2>
+          <p class="sub">Mobil uygulamanın sunduğu deneyimin özeti — aynı backend, aynı Filiz.</p>
+          <div class="features">
+            <article class="feature-card">
+              <div class="icon">🌳</div>
+              <h3>Ortak sanal ağaç</h3>
+              <p>Partner veya ailenizle eşleşin; sulayın, tür seçin, seviye 1–5 arasında birlikte büyütün.</p>
+            </article>
+            <article class="feature-card">
+              <div class="icon">📔</div>
+              <h3>Günlük ritüelleri</h3>
+              <p>Sabah, öğle ve akşam sulama ile duygularınızı yazın; haftalık sıfırlama ile hafif ve gizlilik odaklı.</p>
+            </article>
+            <article class="feature-card">
+              <div class="icon">💜</div>
+              <h3>Birlikte</h3>
+              <p>Eşleşme kodları, geçici sohbet, çevrimiçi durum ve paylaşılan bahçe.</p>
+            </article>
+            <article class="feature-card">
+              <div class="icon">✨</div>
+              <h3>Burç &amp; motivasyon</h3>
+              <p>Kişiselleştirilmiş karşılama, burç yorumları ve haftalık Filiz ilerlemeniz.</p>
+            </article>
+            <article class="feature-card">
+              <div class="icon">🎮</div>
+              <h3>Filiz Hafıza</h3>
+              <p>Mini oyunla puan kazanın; puanlarla premium süre veya reklam izleyerek deneme.</p>
+            </article>
+            <article class="feature-card">
+              <div class="icon">👨‍👩‍👧</div>
+              <h3>Aile modu</h3>
+              <p>Anne/baba ve çocuk rolleri; aile havuzu ve birlikte büyüyen ağaç.</p>
+            </article>
+          </div>
+          <div class="tree-levels">
+            <span class="tree-pill">🌱 Tohum</span>
+            <span class="tree-pill">🌿 Filiz</span>
+            <span class="tree-pill">🪴 Genç ağaç</span>
+            <span class="tree-pill">🌳 Olgun</span>
+            <span class="tree-pill">🌸 Çiçeklenmiş Filiz</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="nasil">
+        <div class="wrap">
+          <h2>Nasıl çalışır?</h2>
+          <p class="sub">Üç adımda başlayın — hesap e-postası zorunlu değil.</p>
+          <div class="features">
+            <article class="feature-card">
+              <div class="icon">1️⃣</div>
+              <h3>Profilini oluştur</h3>
+              <p>Ad, tema (Pembe Bahçe / Mavi Orman) ve isteğe bağlı doğum bilgileri.</p>
+            </article>
+            <article class="feature-card">
+              <div class="icon">2️⃣</div>
+              <h3>Eşleş veya aileye katıl</h3>
+              <p>Kod paylaşarak partner veya aile üyeleriyle bağlan.</p>
+            </article>
+            <article class="feature-card">
+              <div class="icon">3️⃣</div>
+              <h3>Birlikte büyüt</h3>
+              <p>Günlük yaz, ağacı sulat, sohbet et — duygusal refah yolculuğunuz.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="legal-strip" id="yasal">
+        <div class="wrap">
+          <p>Filiz tıbbi veya psikolojik danışmanlık yerine geçmez. 18 yaş altı kullanıcılar için ebeveyn gözetimi önerilir.</p>
+          <div class="legal-links">
+            <a id="privacy-link" href="#">Gizlilik Politikası</a>
+            <a id="terms-link" href="#">Kullanım Koşulları</a>
+            <a id="support-link" href="mailto:hasanaltunofficial@gmail.com">Destek</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>© <span id="year"></span> Filiz — Birlikte Büyü · <code>com.altun.filiz</code></p>
+        <p class="version-foot" id="version-foot" title="">Filiz · v1.0.0</p>
+      </div>
+    </footer>
+  </div>
+
+  <!-- PIN modal -->
+  <div class="overlay" id="pin-overlay" role="dialog" aria-modal="true" aria-labelledby="pin-title">
+    <div class="modal">
+      <h3 id="pin-title">Yönetici PIN</h3>
+      <input type="password" id="pin-input" inputmode="numeric" maxlength="6" minlength="4" placeholder="••••" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-1p-ignore="true" />
+      <p class="hint" id="pin-attempt-hint" style="margin-top:10px;display:none"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="pin-cancel">İptal</button>
+        <button type="button" class="btn btn-primary" id="pin-submit">Giriş</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Issue code modal -->
+  <div class="overlay" id="issue-overlay">
+    <div class="modal">
+      <h3>Manuel premium kodu</h3>
+      <label class="field-label">Kaç cihaz kullanabilir?</label>
+      <input type="number" id="issue-max" value="1" min="1" max="1000" />
+      <label class="field-label">Premium süresi (gün)</label>
+      <input type="number" id="issue-days" value="30" min="1" max="3650" />
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="issue-cancel">İptal</button>
+        <button type="button" class="btn btn-primary" id="issue-submit">Üret</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin panel -->
+  <div id="admin-panel" aria-hidden="true">
+    <div class="admin-top">
+      <button type="button" id="admin-close" aria-label="Kapat">←</button>
+      <h1>🔒 Gizli Panel</h1>
+      <button type="button" id="admin-refresh" aria-label="Yenile">↻</button>
+    </div>
+    <div class="admin-scroll" id="admin-body">
+      <div class="pin-warn" id="pin-warn"></div>
+
+      <p class="section-h">📊 Canlı Analitik</p>
+      <div id="telemetry-area" class="loading">Yükleniyor…</div>
+
+      <p class="section-h">💜 Eşleşme</p>
+      <div class="stats-row" id="couple-stats">
+        <div class="stat-card"><div class="val" id="linked-pairs">—</div><div class="lbl">Bağlı çift</div></div>
+        <div class="stat-card"><div class="val" id="pending-req">—</div><div class="lbl">Bekleyen istek</div></div>
+      </div>
+
+      <div class="acc" data-acc="online">
+        <button type="button" class="acc-h">Şu an aktif cihazlar <small id="online-sub">0 cihaz</small><span>▼</span></button>
+        <div class="acc-b" id="online-list"></div>
+      </div>
+      <div class="acc" data-acc="24h">
+        <button type="button" class="acc-h">Son 24 saat <small id="24h-sub">0 cihaz</small><span>▼</span></button>
+        <div class="acc-b" id="24h-list"></div>
+      </div>
+
+      <div class="acc" data-acc="services">
+        <button type="button" class="acc-h">🔌 Servis Bağlantıları <small id="services-sub">API · Worker · Firebase</small><span>▼</span></button>
+        <div class="acc-b" id="services-body"></div>
+      </div>
+
+      <div class="acc" data-acc="game">
+        <button type="button" class="acc-h">🎮 Oyun puan ayarları <small id="game-sub">yükleniyor</small><span>▼</span></button>
+        <div class="acc-b" id="game-body"></div>
+      </div>
+
+      <div class="acc" data-acc="premium">
+        <button type="button" class="acc-h">💳 Premium Ödeme <small id="premium-sub">yükleniyor</small><span>▼</span></button>
+        <div class="acc-b" id="premium-body"></div>
+      </div>
+
+      <div class="acc" data-acc="legal">
+        <button type="button" class="acc-h">🛡️ Gizlilik &amp; Yasal <small id="legal-sub">yükleniyor</small><span>▼</span></button>
+        <div class="acc-b" id="legal-body"></div>
+      </div>
+
+      <div class="acc" data-acc="admob">
+        <button type="button" class="acc-h">📢 AdMob Yönetimi <small id="admob-sub">0 / 5 açık</small><span>▼</span></button>
+        <div class="acc-b" id="admob-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  "use strict";
+
+  const WORKER_KEY = "filiz_cf_worker_url";
+  const SESS_KEY = "filiz_admin_sess";
+  const PIN_X_KEY = "filiz_admin_pin_x";
+  const PIN_ATTEMPTS_KEY = "filiz_pin_att";
+  const ADMIN_TAP_TARGET = 7;
+  const ADMIN_TAP_MS = 2500;
+  const PIN_MAX_ATTEMPTS = 5;
+  const PIN_LOCK_MS = 15 * 60 * 1000;
+  const FIREBASE_RTDB = "https://filiz-duygu-default-rtdb.firebaseio.com";
+
+  function _xorPack(str, salt) {
+    var s = String(salt || "f7z");
+    return str.split("").map(function (ch, i) {
+      return ch.charCodeAt(0) ^ s.charCodeAt(i % s.length);
+    });
+  }
+  function _xorUnpack(bytes, salt) {
+    var s = String(salt || "f7z");
+    return bytes.map(function (b, i) {
+      return String.fromCharCode(b ^ s.charCodeAt(i % s.length));
+    }).join("");
+  }
+  const DEFAULT_WORKER = (function () {
+    var w = [104, 116, 116, 112, 115, 58, 47, 47, 102, 105, 108, 105, 122, 46, 104, 97, 115, 97, 110, 97, 108, 116, 117, 110, 111, 102, 102, 105, 99, 105, 97, 108, 45, 99, 50, 56, 46, 119, 111, 114, 107, 101, 114, 115, 46, 100, 101, 118];
+    return String.fromCharCode.apply(null, w);
+  })();
+
+  let adminSessionToken = null;
+  let adminSessionExp = 0;
+
+  const PLACEMENTS = {
+    dashboard_banner: { label: "Dashboard Banner", page: "Ana Sayfa" },
+    radar_banner: { label: "Birlikte Banner", page: "Birlikte" },
+    journal_banner: { label: "Günlük Banner", page: "Günlük" },
+    interstitial: { label: "Geçiş Reklamı", page: "Genel Geçiş" },
+    rewarded: { label: "Ödüllü Video", page: "Ödüllü Ekran" },
+  };
+
+  const DEFAULT_GAME = {
+    premiumCostPoints: 1000,
+    premiumRewardDays: 1,
+    pointsPerMatch: 10,
+    pointsPerLevelTier: 2,
+    pointsStreakBonus: 3,
+    streakBonusCap: 6,
+    levelCompleteBase: 35,
+    levelCompletePerLevel: 10,
+    rewardedAdBonusPoints: 50,
+    maxDailyPremiumRedeems: 3,
+    videoTrialAmount: 2,
+    videoTrialUnit: "hours",
+  };
+
+  let adminTapCount = 0;
+  let adminTapTimer = null;
+  let telemetryPoll = null;
+
+  const state = {
+    telemetry: null,
+    admobRows: [],
+    premiumForm: {},
+    gameForm: { ...DEFAULT_GAME },
+    legalForm: {},
+    premiumCodes: [],
+    apiStatus: "idle",
+    cfStatus: "idle",
+    firebaseStatus: "idle",
+  };
+
+  function getBaseUrl() {
+    const saved = localStorage.getItem(WORKER_KEY);
+    return (saved || DEFAULT_WORKER).trim().replace(/\/+$|\/api$/i, "");
+  }
+
+  function setBaseUrl(url) {
+    const n = url.trim().replace(/\/+$|\/api$/i, "");
+    localStorage.setItem(WORKER_KEY, n);
+    updateLegalLinks();
+    return n;
+  }
+
+  function pinFingerprint(pin) {
+    var h = 0;
+    var p = String(pin);
+    for (var i = 0; i < p.length; i++) {
+      h = ((h << 5) - h + p.charCodeAt(i)) | 0;
+    }
+    return String(h);
+  }
+
+  function loadPin() {
+    try {
+      var raw = sessionStorage.getItem(PIN_X_KEY);
+      if (!raw) return "";
+      var parsed = JSON.parse(raw);
+      if (!parsed || !parsed.v || !parsed.t) return "";
+      if (parsed.exp && Date.now() > parsed.exp) {
+        sessionStorage.removeItem(PIN_X_KEY);
+        return "";
+      }
+      return _xorUnpack(parsed.v, parsed.t);
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function savePinLocal(pin) {
+    try {
+      var salt = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      sessionStorage.setItem(PIN_X_KEY, JSON.stringify({
+        v: _xorPack(String(pin).trim(), salt),
+        t: salt,
+        exp: Date.now() + 12 * 60 * 60 * 1000,
+        fp: pinFingerprint(pin),
+      }));
+    } catch (e) { /* */ }
+  }
+
+  function clearAdminSecrets() {
+    adminSessionToken = null;
+    adminSessionExp = 0;
+    try {
+      sessionStorage.removeItem(SESS_KEY);
+      sessionStorage.removeItem(PIN_X_KEY);
+    } catch (e) { /* */ }
+  }
+
+  function loadAdminSession() {
+    try {
+      var raw = sessionStorage.getItem(SESS_KEY);
+      if (!raw) return false;
+      var o = JSON.parse(raw);
+      if (!o || !o.token || !o.exp || Date.now() > o.exp) {
+        sessionStorage.removeItem(SESS_KEY);
+        return false;
+      }
+      adminSessionToken = o.token;
+      adminSessionExp = o.exp;
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function saveAdminSession(token, ttlSec) {
+    var exp = Date.now() + (ttlSec || 3600) * 1000;
+    adminSessionToken = token;
+    adminSessionExp = exp;
+    try {
+      sessionStorage.setItem(SESS_KEY, JSON.stringify({ token: token, exp: exp }));
+    } catch (e) { /* */ }
+  }
+
+  function isPinLocked() {
+    try {
+      var raw = sessionStorage.getItem(PIN_ATTEMPTS_KEY);
+      if (!raw) return false;
+      var o = JSON.parse(raw);
+      return o && o.until && Date.now() < o.until;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function pinLockRemainingMin() {
+    try {
+      var raw = sessionStorage.getItem(PIN_ATTEMPTS_KEY);
+      if (!raw) return 0;
+      var o = JSON.parse(raw);
+      if (!o || !o.until) return 0;
+      return Math.max(1, Math.ceil((o.until - Date.now()) / 60000));
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function recordPinFail() {
+    try {
+      var raw = sessionStorage.getItem(PIN_ATTEMPTS_KEY);
+      var o = raw ? JSON.parse(raw) : { n: 0, until: 0 };
+      o.n = (o.n || 0) + 1;
+      if (o.n >= PIN_MAX_ATTEMPTS) {
+        o.until = Date.now() + PIN_LOCK_MS;
+        o.n = 0;
+      }
+      sessionStorage.setItem(PIN_ATTEMPTS_KEY, JSON.stringify(o));
+    } catch (e) { /* */ }
+  }
+
+  function clearPinFails() {
+    try { sessionStorage.removeItem(PIN_ATTEMPTS_KEY); } catch (e) { /* */ }
+  }
+
+  function updateLegalLinks() {
+    const base = getBaseUrl();
+    document.getElementById("privacy-link").href = base + "/privacy";
+    document.getElementById("terms-link").href = base + "/terms";
+  }
+
+  async function adminFetch(path, init) {
+    const base = getBaseUrl();
+    if (!base) return { ok: false, status: 0, error: "API adresi yok" };
+    if (!loadAdminSession() || !adminSessionToken) {
+      return { ok: false, status: 401, error: "Oturum gerekli" };
+    }
+
+    const pin = loadPin();
+    if (!pin || !/^[0-9]{4,6}$/.test(pin)) {
+      return { ok: false, status: 401, error: "PIN oturumu yok" };
+    }
+
+    const method = ((init && init.method) || "GET").toUpperCase();
+    let url = base + path;
+    let body = init && init.body;
+
+    const appendPin = function () {
+      url += (url.includes("?") ? "&" : "?") + "pin=" + encodeURIComponent(pin);
+    };
+
+    if (method === "GET" || path.includes("/issue-code")) {
+      appendPin();
+    } else if (body && typeof body === "string") {
+      try {
+        const parsed = JSON.parse(body);
+        body = JSON.stringify(Object.assign({}, parsed, { pin: pin }));
+      } catch (e) {
+        appendPin();
+      }
+    } else {
+      appendPin();
+    }
+
+    try {
+      const res = await fetch(url, {
+        method: method,
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-session": adminSessionToken,
+          ...(init && init.headers),
+        },
+        body: body,
+      });
+      if (res.status === 401) {
+        clearAdminSecrets();
+        return { ok: false, status: 401, error: "Yetkisiz — tekrar giriş" };
+      }
+      if (!res.ok) {
+        const err = await res.json().catch(function () { return {}; });
+        return { ok: false, status: res.status, error: err.error || res.statusText };
+      }
+      return { ok: true, data: await res.json() };
+    } catch (e) {
+      return { ok: false, status: 0, error: String(e) };
+    }
+  }
+
+  function formatSeen(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso.includes("T") ? iso : iso.replace(" ", "T") + "Z");
+    if (isNaN(d.getTime())) return iso;
+    const diffMin = Math.floor((Date.now() - d.getTime()) / 60000);
+    if (diffMin < 1) return "az önce";
+    if (diffMin < 60) return diffMin + " dk önce";
+    const diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return diffH + " sa önce";
+    return d.toLocaleDateString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  }
+
+  function showPinWarn(msg) {
+    const el = document.getElementById("pin-warn");
+    if (!msg) {
+      el.classList.remove("show");
+      el.textContent = "";
+      return;
+    }
+    el.classList.add("show");
+    el.textContent = msg;
+  }
+
+  function renderTelemetry() {
+    const t = state.telemetry;
+    const area = document.getElementById("telemetry-area");
+    if (!t) {
+      area.innerHTML = '<p class="hint">Telemetri alınamadı.</p>';
+      return;
+    }
+    area.innerHTML =
+      '<div class="stats-row">' +
+      statCard(t.onlineNow ?? 0, "Şu An Online") +
+      statCard(t.active24h ?? 0, "Son 24 Saat") +
+      statCard(t.totalInstalls ?? 0, "APK Kurulum") +
+      "</div>" +
+      '<p class="hint">Yalnızca gerçek APK kurulumları. ' +
+      (t.uninstallAfterDays ?? 14) +
+      " gün açılmayan cihazlar kurulumdan düşer." +
+      (t.apkBaselineAt ? "<br>Son APK sıfırlama: " + new Date(t.apkBaselineAt).toLocaleString("tr-TR") : "") +
+      '</p><button type="button" class="btn-sm danger" id="apk-reset-btn">Yeni APK sayacını sıfırla</button>';
+
+    document.getElementById("linked-pairs").textContent = t.linkedPairs ?? state.coupleStats?.linkedPairs ?? "—";
+    document.getElementById("pending-req").textContent = t.pendingRequests ?? state.coupleStats?.pendingRequests ?? "—";
+
+    const online = t.onlineDevices || [];
+    const h24 = t.active24hDevices || [];
+    document.getElementById("online-sub").textContent = online.length + " cihaz";
+    document.getElementById("24h-sub").textContent = h24.length + " cihaz";
+    document.getElementById("online-list").innerHTML = deviceListHtml(online, true);
+    document.getElementById("24h-list").innerHTML = deviceListHtml(h24.slice(0, 20), false, h24.length > 20 ? h24.length - 20 : 0);
+
+    document.getElementById("apk-reset-btn").onclick = runApkReset;
+  }
+
+  function statCard(val, lbl) {
+    return '<div class="stat-card"><div class="val">' + val + '</div><div class="lbl">' + lbl + "</div></div>";
+  }
+
+  function deviceListHtml(devices, live, more) {
+    if (!devices.length) return '<p class="hint">Kayıt yok.</p>';
+    let html = devices.map(function (d) {
+      return (
+        '<div class="device-row">' +
+        "<strong>" + (d.displayName ? "@" + esc(d.displayName) : esc(d.deviceId)) + "</strong>" +
+        "<span>" + esc(d.platform) + " · " + formatSeen(d.lastSeen) +
+        (d.displayName ? " · " + esc(d.deviceId) : "") +
+        (!live && d.installedAt ? " · Kurulum: " + formatSeen(d.installedAt) : "") +
+        "</span></div>"
+      );
+    }).join("");
+    if (more) html += '<p class="hint">+' + more + " cihaz daha…</p>";
+    return html;
+  }
+
+  function esc(s) {
+    const d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  }
+
+  async function fetchTelemetry() {
+    const area = document.getElementById("telemetry-area");
+    area.innerHTML = '<p class="loading">Yükleniyor…</p>';
+    const r = await adminFetch("/api/admob/admin/telemetry");
+    if (r.ok) {
+      state.telemetry = r.data;
+      showPinWarn(null);
+    } else {
+      state.telemetry = { onlineNow: 0, active24h: 0, totalInstalls: 0 };
+      if (r.status === 401) showPinWarn("Oturum süresi doldu veya PIN geçersiz. Sayfayı yenileyip tekrar giriş yapın.");
+      else showPinWarn(r.error || "Telemetri alınamadı");
+    }
+    renderTelemetry();
+  }
+
+  async function fetchCoupleStats() {
+    const r = await adminFetch("/api/admin/couples/stats");
+    if (r.ok) {
+      state.coupleStats = r.data;
+      document.getElementById("linked-pairs").textContent = r.data.linkedPairs ?? 0;
+      document.getElementById("pending-req").textContent = r.data.pendingRequests ?? 0;
+    }
+  }
+
+  async function runApkReset() {
+    if (!confirm("Cloudflare analitik, aile kodları, bekleyen istekler ve KV verisi silinir. Devam?")) return;
+    const r = await adminFetch("/api/admin/maintenance/reset-apk-baseline", { method: "POST", body: "{}" });
+    if (r.ok) {
+      alert("Tamam. Yeni ölçüm: " + r.data.baselineAt + "\nKV: " + (r.data.kvKeysDeleted ?? 0) + " anahtar");
+      await fetchTelemetry();
+      await fetchCoupleStats();
+    } else alert("Hata: " + (r.error || r.status));
+  }
+
+  function connDot(status) {
+    const c = status === "ok" ? "ok" : status === "fail" ? "fail" : "wait";
+    return '<span class="dot ' + c + '"></span>';
+  }
+
+  function renderServices() {
+    const base = getBaseUrl();
+    document.getElementById("services-body").innerHTML =
+      '<div class="card">' +
+      connDot(state.apiStatus) + " API Sunucusu<br><small>" + esc(base) + "/api</small>" +
+      '<button type="button" class="btn-sm" data-test="api">Bağlantıyı test et</button></div>' +
+      '<div class="card"><label class="field-label">Cloudflare Worker URL</label>' +
+      '<input type="url" id="cf-url-input" value="' + esc(base) + '" />' +
+      connDot(state.cfStatus) + " Worker" +
+      '<button type="button" class="btn-sm" data-test="cf">Test et</button>' +
+      '<button type="button" class="btn-sm primary" id="cf-save">URL Kaydet</button></div>' +
+      '<div class="card"><label class="field-label">Yönetici PIN (göster)</label>' +
+      '<input type="text" id="new-pin-input" placeholder="Yeni PIN (4-6 rakam)" inputmode="numeric" />' +
+      '<p class="hint">Mevcut PIN: <span id="current-pin-display">••••</span> (gösterilmez)</p>' +
+      '<button type="button" class="btn-sm primary" id="pin-save-btn">PIN Kaydet (cihaz + KV)</button></div>' +
+      '<div class="card">' + connDot(state.firebaseStatus) + " Firebase RTDB<br><small>" + esc(FIREBASE_RTDB) + "</small>" +
+      '<button type="button" class="btn-sm" data-test="firebase">Firebase test</button></div>';
+
+    document.querySelector('[data-test="api"]').onclick = testApi;
+    document.querySelector('[data-test="cf"]').onclick = function () { testCf(document.getElementById("cf-url-input").value); };
+    document.getElementById("cf-save").onclick = function () {
+      setBaseUrl(document.getElementById("cf-url-input").value);
+      alert("Worker URL kaydedildi.");
+      refreshAdmin();
+    };
+    document.getElementById("pin-save-btn").onclick = saveAdminPinServer;
+    document.querySelector('[data-test="firebase"]').onclick = testFirebase;
+  }
+
+  async function testApi() {
+    state.apiStatus = "checking";
+    renderServices();
+    try {
+      const res = await fetch(getBaseUrl() + "/api/admob/config");
+      state.apiStatus = res.ok ? "ok" : "fail";
+    } catch {
+      state.apiStatus = "fail";
+    }
+    renderServices();
+    updateServicesSub();
+  }
+
+  async function testCf(url) {
+    const n = (url || getBaseUrl()).trim().replace(/\/+$/, "");
+    state.cfStatus = "checking";
+    renderServices();
+    try {
+      const res = await fetch(n + "/ping", { signal: AbortSignal.timeout(5000) });
+      state.cfStatus = res.ok ? "ok" : "fail";
+    } catch {
+      state.cfStatus = "fail";
+    }
+    renderServices();
+    updateServicesSub();
+  }
+
+  async function testFirebase() {
+    state.firebaseStatus = "checking";
+    renderServices();
+    try {
+      const res = await fetch(FIREBASE_RTDB + "/.json?print=silent", { signal: AbortSignal.timeout(6000) });
+      state.firebaseStatus = res.ok ? "ok" : "fail";
+    } catch {
+      state.firebaseStatus = "fail";
+    }
+    renderServices();
+    updateServicesSub();
+  }
+
+  function updateServicesSub() {
+    const s = function (x) { return x === "ok" ? "✓" : x === "fail" ? "✗" : "…"; };
+    document.getElementById("services-sub").textContent =
+      "API " + s(state.apiStatus) + " · Worker " + s(state.cfStatus) + " · Firebase " + s(state.firebaseStatus);
+  }
+
+  async function saveAdminPinServer() {
+    const newPin = document.getElementById("new-pin-input").value.trim();
+    if (!/^[0-9]{4,6}$/.test(newPin)) {
+      alert("4–6 haneli rakam girin.");
+      return;
+    }
+    const current = loadPin();
+    const base = getBaseUrl();
+    let res = await fetch(base + "/api/admob/admin/set-pin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ currentPin: current, newPin }),
+    });
+    if (!res.ok) {
+      alert("PIN kaydedilemedi: " + res.status);
+      return;
+    }
+    savePinLocal(newPin);
+    document.getElementById("new-pin-input").value = "";
+    alert("PIN kaydedildi.");
+  }
+
+  function parseGameConfig(data) {
+    const row = (data && data.game) || data || {};
+    const d = DEFAULT_GAME;
+    const unit = String(row.video_trial_unit || "hours").toLowerCase();
+    return {
+      premiumCostPoints: clamp(row.premium_cost_points, 100, 500000, d.premiumCostPoints),
+      premiumRewardDays: clamp(row.premium_reward_days, 1, 30, d.premiumRewardDays),
+      pointsPerMatch: clamp(row.points_per_match, 1, 500, d.pointsPerMatch),
+      pointsPerLevelTier: clamp(row.points_per_level_tier, 0, 100, d.pointsPerLevelTier),
+      pointsStreakBonus: clamp(row.points_streak_bonus, 0, 50, d.pointsStreakBonus),
+      streakBonusCap: clamp(row.streak_bonus_cap, 1, 20, d.streakBonusCap),
+      levelCompleteBase: clamp(row.level_complete_base, 0, 500, d.levelCompleteBase),
+      levelCompletePerLevel: clamp(row.level_complete_per_level, 0, 200, d.levelCompletePerLevel),
+      rewardedAdBonusPoints: clamp(row.rewarded_ad_bonus_points, 0, 500, d.rewardedAdBonusPoints),
+      maxDailyPremiumRedeems: clamp(row.max_daily_premium_redeems, 1, 20, d.maxDailyPremiumRedeems),
+      videoTrialAmount: clamp(row.video_trial_amount, 1, 168, d.videoTrialAmount),
+      videoTrialUnit: unit === "days" || unit === "day" ? "days" : "hours",
+    };
+  }
+
+  function clamp(v, min, max, fb) {
+    const n = parseInt(v, 10);
+    return isNaN(n) ? fb : Math.min(max, Math.max(min, n));
+  }
+
+  function gameToPatch(g) {
+    return {
+      premium_cost_points: g.premiumCostPoints,
+      premium_reward_days: g.premiumRewardDays,
+      points_per_match: g.pointsPerMatch,
+      points_per_level_tier: g.pointsPerLevelTier,
+      points_streak_bonus: g.pointsStreakBonus,
+      streak_bonus_cap: g.streakBonusCap,
+      level_complete_base: g.levelCompleteBase,
+      level_complete_per_level: g.levelCompletePerLevel,
+      rewarded_ad_bonus_points: g.rewardedAdBonusPoints,
+      max_daily_premium_redeems: g.maxDailyPremiumRedeems,
+      video_trial_amount: g.videoTrialAmount,
+      video_trial_unit: g.videoTrialUnit,
+    };
+  }
+
+  async function fetchGame() {
+    try {
+      const res = await fetch(getBaseUrl() + "/config");
+      if (res.ok) state.gameForm = parseGameConfig(await res.json());
+    } catch { /* keep */ }
+    renderGame();
+  }
+
+  function renderGame() {
+    const g = state.gameForm;
+    document.getElementById("game-sub").textContent =
+      g.premiumCostPoints + " puan → " + g.premiumRewardDays + " gün";
+    const fields = [
+      ["videoTrialAmount", "Reklam izle — süre (sayı)", g.videoTrialAmount],
+      ["premiumCostPoints", "Premium için gerekli puan", g.premiumCostPoints],
+      ["premiumRewardDays", "Kazanılan premium (gün)", g.premiumRewardDays],
+      ["pointsPerMatch", "Eşleşme başına puan", g.pointsPerMatch],
+      ["pointsPerLevelTier", "Level bonusu", g.pointsPerLevelTier],
+      ["pointsStreakBonus", "Seri bonusu", g.pointsStreakBonus],
+      ["streakBonusCap", "Seri üst sınır", g.streakBonusCap],
+      ["levelCompleteBase", "Level bitiş taban", g.levelCompleteBase],
+      ["levelCompletePerLevel", "Level bitiş × level", g.levelCompletePerLevel],
+      ["rewardedAdBonusPoints", "Ödüllü video bonus", g.rewardedAdBonusPoints],
+      ["maxDailyPremiumRedeems", "Günlük max premium", g.maxDailyPremiumRedeems],
+    ];
+    let html = '<p class="hint">GET /config ile uygulamaya gider.</p>';
+    html += '<label class="field-label">Video deneme birimi</label><select id="video-unit"><option value="hours"' +
+      (g.videoTrialUnit === "hours" ? " selected" : "") + '>Saat</option><option value="days"' +
+      (g.videoTrialUnit === "days" ? " selected" : "") + ">Gün</option></select>";
+    fields.forEach(function (f) {
+      html += '<label class="field-label">' + f[1] + '</label><input type="number" data-game="' + f[0] + '" value="' + f[2] + '" />';
+    });
+    html += '<button type="button" class="btn-sm gold" id="game-save">Oyun ayarlarını kaydet</button>';
+    document.getElementById("game-body").innerHTML = html;
+    document.getElementById("video-unit").onchange = function (e) {
+      state.gameForm.videoTrialUnit = e.target.value;
+    };
+    document.querySelectorAll("[data-game]").forEach(function (inp) {
+      inp.onchange = function () {
+        state.gameForm[inp.dataset.game] = parseInt(inp.value, 10) || 0;
+      };
+    });
+    document.getElementById("game-save").onclick = saveGame;
+  }
+
+  async function saveGame() {
+    document.querySelectorAll("[data-game]").forEach(function (inp) {
+      state.gameForm[inp.dataset.game] = parseInt(inp.value, 10) || 0;
+    });
+    state.gameForm.videoTrialUnit = document.getElementById("video-unit").value;
+    const res = await fetch(getBaseUrl() + "/admin/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin: loadPin(), ...gameToPatch(state.gameForm) }),
+    });
+    if (res.ok) {
+      alert("Oyun ayarları kaydedildi.");
+      state.gameForm = parseGameConfig(await res.json());
+      renderGame();
+    } else alert("Hata: " + res.status);
+  }
+
+  function parseAppConfig(data) {
+    const row = data || {};
+    return {
+      payment_enabled: row.payment_enabled === true || row.payment_enabled === "true",
+      payment_sale_toggle: row.payment_sale_toggle === true || row.payment_sale_toggle === "true",
+      revenuecat_android_key: String(row.revenuecat_android_key || "").trim(),
+      google_play_package_name: String(row.google_play_package_name || "").trim(),
+      revenuecat_product_id: String(row.revenuecat_product_id || "premium_monthly").trim(),
+      revenuecat_entitlement_id: String(row.revenuecat_entitlement_id || "premium").trim(),
+    };
+  }
+
+  async function fetchPremium() {
+    try {
+      const res = await fetch(getBaseUrl() + "/config");
+      if (res.ok) state.premiumForm = parseAppConfig(await res.json());
+    } catch { /* */ }
+    renderPremium();
+    fetchPremiumCodes();
+  }
+
+  function renderPremium() {
+    const p = state.premiumForm;
+    document.getElementById("premium-sub").textContent = p.payment_enabled
+      ? "Uygulamada ödeme açık"
+      : p.payment_sale_toggle ? "Toggle açık · eksik yapılandırma" : "Kapalı";
+    document.getElementById("premium-body").innerHTML =
+      '<div class="switch-wrap"><span>Premium satış</span><input type="checkbox" id="prem-toggle"' +
+      (p.payment_sale_toggle ? " checked" : "") + " /></div>" +
+      field("rc-key", "RevenueCat Android API Key", p.revenuecat_android_key) +
+      field("gp-pkg", "Google Play Package", p.google_play_package_name || "com.altun.filiz") +
+      field("rc-prod", "Ürün ID", p.revenuecat_product_id) +
+      field("rc-ent", "Entitlement ID", p.revenuecat_entitlement_id) +
+      '<button type="button" class="btn-sm primary" id="prem-save">Ayarları kaydet</button>' +
+      '<a class="btn-sm" href="https://app.revenuecat.com" target="_blank" rel="noopener">RevenueCat Dashboard</a>' +
+      '<hr style="border-color:var(--border);margin:16px 0" />' +
+      '<p class="hint" id="code-stats">Kodlar yükleniyor…</p>' +
+      '<button type="button" class="btn-sm primary" id="code-issue">Kod üret</button>' +
+      '<button type="button" class="btn-sm" id="code-refresh">Listeyi yenile</button>' +
+      '<div id="codes-list"></div>';
+
+    document.getElementById("prem-toggle").onchange = async function (e) {
+      state.premiumForm.payment_sale_toggle = e.target.checked;
+      await savePremiumQuick();
+    };
+    ["rc-key", "gp-pkg", "rc-prod", "rc-ent"].forEach(function (id) {
+      document.getElementById(id).onchange = function (ev) {
+        const map = { "rc-key": "revenuecat_android_key", "gp-pkg": "google_play_package_name", "rc-prod": "revenuecat_product_id", "rc-ent": "revenuecat_entitlement_id" };
+        state.premiumForm[map[id]] = ev.target.value;
+      };
+    });
+    document.getElementById("prem-save").onclick = savePremium;
+    document.getElementById("code-issue").onclick = function () {
+      document.getElementById("issue-overlay").classList.add("open");
+    };
+    document.getElementById("code-refresh").onclick = fetchPremiumCodes;
+  }
+
+  function field(id, label, val) {
+    return '<label class="field-label">' + label + '</label><input type="text" id="' + id + '" value="' + esc(val) + '" />';
+  }
+
+  async function savePremiumQuick() {
+    await savePremiumBody();
+  }
+
+  async function savePremium() {
+    ["rc-key", "gp-pkg", "rc-prod", "rc-ent"].forEach(function (id) {
+      const map = { "rc-key": "revenuecat_android_key", "gp-pkg": "google_play_package_name", "rc-prod": "revenuecat_product_id", "rc-ent": "revenuecat_entitlement_id" };
+      state.premiumForm[map[id]] = document.getElementById(id).value;
+    });
+    await savePremiumBody();
+  }
+
+  async function savePremiumBody() {
+    const p = state.premiumForm;
+    const res = await fetch(getBaseUrl() + "/admin/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        pin: loadPin(),
+        payment_sale_toggle: p.payment_sale_toggle,
+        revenuecat_android_key: p.revenuecat_android_key,
+        google_play_package_name: p.google_play_package_name,
+        revenuecat_product_id: p.revenuecat_product_id,
+        revenuecat_entitlement_id: p.revenuecat_entitlement_id,
+      }),
+    });
+    if (res.ok) {
+      state.premiumForm = parseAppConfig(await res.json());
+      alert("Premium ayarları kaydedildi.");
+      renderPremium();
+    } else alert("Hata: " + res.status);
+  }
+
+  async function fetchPremiumCodes() {
+    const r = await adminFetch("/api/payment/admin/codes");
+    const list = document.getElementById("codes-list");
+    const stats = document.getElementById("code-stats");
+    if (!list) return;
+    if (!r.ok) {
+      if (stats) stats.textContent = "Kod listesi alınamadı.";
+      list.innerHTML = "";
+      return;
+    }
+    state.premiumCodes = r.data.codes || [];
+    if (stats) stats.textContent = (r.data.manualCount ?? 0) + " manuel · " + (r.data.total ?? 0) + " toplam";
+    list.innerHTML = state.premiumCodes.map(function (row) {
+      const active = row.is_active !== false && row.status !== "inactive";
+      return (
+        '<div class="code-row"><div><strong>' + esc(row.code) + "</strong><br><small>" +
+        (row.duration_days ?? 30) + " gün · " + (row.use_count ?? 0) + "/" + (row.max_uses ?? 1) +
+        ' · ' + esc(row.status || "") + '</small></div><div class="row-flex">' +
+        '<label><input type="checkbox" data-code="' + esc(row.code) + '"' + (active ? " checked" : "") + " /> Aktif</label>" +
+        '<button type="button" class="btn-sm danger" data-del="' + esc(row.code) + '">Sil</button></div></div>'
+      );
+    }).join("") || '<p class="hint">Henüz kod yok.</p>';
+
+    list.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+      cb.onchange = async function () {
+        await adminFetch("/api/payment/admin/codes/toggle", {
+          method: "POST",
+          body: JSON.stringify({ code: cb.dataset.code, isActive: cb.checked }),
+        });
+        fetchPremiumCodes();
+      };
+    });
+    list.querySelectorAll("[data-del]").forEach(function (btn) {
+      btn.onclick = async function () {
+        if (!confirm(btn.dataset.del + " silinsin mi?")) return;
+        await adminFetch("/api/payment/admin/codes/delete", {
+          method: "POST",
+          body: JSON.stringify({ code: btn.dataset.del }),
+        });
+        fetchPremiumCodes();
+      };
+    });
+  }
+
+  async function issueCode() {
+    const maxUses = Math.min(1000, Math.max(1, parseInt(document.getElementById("issue-max").value, 10) || 1));
+    const durationDays = Math.min(3650, Math.max(1, parseInt(document.getElementById("issue-days").value, 10) || 30));
+    const r = await adminFetch("/api/membership/admin/issue-code", {
+      method: "POST",
+      body: JSON.stringify({ maxUses, durationDays }),
+    });
+    document.getElementById("issue-overlay").classList.remove("open");
+    if (r.ok && r.data.code) {
+      alert("Yeni kod: " + r.data.code);
+      fetchPremiumCodes();
+    } else alert("Kod üretilemedi.");
+  }
+
+  async function fetchLegal() {
+    const r = await adminFetch("/api/admin/legal");
+    if (r.ok) state.legalForm = r.data;
+    else {
+      try {
+        const pub = await fetch(getBaseUrl() + "/api/legal");
+        if (pub.ok) {
+          const d = await pub.json();
+          state.legalForm = d.legal || d;
+        }
+      } catch { /* */ }
+    }
+    renderLegal();
+  }
+
+  function renderLegal() {
+    const L = state.legalForm;
+    document.getElementById("legal-sub").textContent = (L.support_email || "") + " · " + (L.last_updated || "");
+    document.getElementById("legal-body").innerHTML =
+      '<p class="hint">Worker KV legal_config — uygulama ve /privacy /terms sayfaları.</p>' +
+      field("leg-email", "Destek e-postası", L.support_email) +
+      field("leg-company", "Şirket / geliştirici", L.company_name) +
+      field("leg-updated", "Son güncelleme", L.last_updated) +
+      field("leg-ptitle", "Gizlilik başlığı", L.privacy_title) +
+      '<label class="field-label">Gizlilik metni</label><textarea id="leg-pbody">' + esc(L.privacy_body) + "</textarea>" +
+      field("leg-ttitle", "Koşullar başlığı", L.terms_title) +
+      '<label class="field-label">Koşullar metni</label><textarea id="leg-tbody">' + esc(L.terms_body) + "</textarea>" +
+      '<button type="button" class="btn-sm primary" id="leg-save">Yasal metinleri kaydet</button>';
+
+    document.getElementById("leg-save").onclick = saveLegal;
+  }
+
+  async function saveLegal() {
+    const patch = {
+      support_email: document.getElementById("leg-email").value,
+      company_name: document.getElementById("leg-company").value,
+      last_updated: document.getElementById("leg-updated").value,
+      privacy_title: document.getElementById("leg-ptitle").value,
+      privacy_body: document.getElementById("leg-pbody").value,
+      terms_title: document.getElementById("leg-ttitle").value,
+      terms_body: document.getElementById("leg-tbody").value,
+    };
+    const res = await fetch(getBaseUrl() + "/api/admin/legal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pin: loadPin(), ...patch }),
+    });
+    if (res.ok) {
+      state.legalForm = await res.json();
+      alert("Yasal metinler kaydedildi.");
+      renderLegal();
+      const sup = document.getElementById("support-link");
+      if (sup && patch.support_email) sup.href = "mailto:" + patch.support_email;
+    } else alert("Hata: " + res.status);
+  }
+
+  async function fetchAdmob() {
+    try {
+      const res = await fetch(getBaseUrl() + "/api/admob/config");
+      if (!res.ok) throw new Error("fail");
+      const data = await res.json();
+      state.admobRows = Object.keys(PLACEMENTS).map(function (key) {
+        const c = data[key] || {};
+        return {
+          key,
+          label: PLACEMENTS[key].label,
+          page: PLACEMENTS[key].page,
+          appId: c.appId || "",
+          unitId: c.unitId || "",
+          isEnabled: !!c.isEnabled,
+        };
+      });
+    } catch {
+      state.admobRows = Object.keys(PLACEMENTS).map(function (key) {
+        return { key, label: PLACEMENTS[key].label, page: PLACEMENTS[key].page, appId: "", unitId: "", isEnabled: false };
+      });
+    }
+    renderAdmob();
+  }
+
+  function renderAdmob() {
+    const enabled = state.admobRows.filter(function (r) { return r.isEnabled; }).length;
+    document.getElementById("admob-sub").textContent = enabled + " / " + state.admobRows.length + " açık";
+    document.getElementById("admob-body").innerHTML = state.admobRows.map(function (row, idx) {
+      return (
+        '<div class="card" data-admob-idx="' + idx + '"><strong>' + esc(row.label) + "</strong> · " + esc(row.page) +
+        '<div class="switch-wrap"><span>Aktif</span><input type="checkbox" data-en="' + idx + '"' + (row.isEnabled ? " checked" : "") + " /></div>" +
+        '<label class="field-label">App ID</label><input data-app="' + idx + '" value="' + esc(row.appId) + '" />' +
+        '<label class="field-label">Unit ID</label><input data-unit="' + idx + '" value="' + esc(row.unitId) + '" />' +
+        '<button type="button" class="btn-sm primary" data-save-ad="' + idx + '">Kaydet</button></div>'
+      );
+    }).join("");
+
+    document.querySelectorAll("[data-en]").forEach(function (cb) {
+      cb.onchange = function () { state.admobRows[cb.dataset.en].isEnabled = cb.checked; };
+    });
+    document.querySelectorAll("[data-app]").forEach(function (inp) {
+      inp.onchange = function () { state.admobRows[inp.dataset.app].appId = inp.value; };
+    });
+    document.querySelectorAll("[data-unit]").forEach(function (inp) {
+      inp.onchange = function () { state.admobRows[inp.dataset.unit].unitId = inp.value; };
+    });
+    document.querySelectorAll("[data-save-ad]").forEach(function (btn) {
+      btn.onclick = function () { saveAdmobRow(parseInt(btn.dataset.saveAd, 10)); };
+    });
+  }
+
+  async function saveAdmobRow(idx) {
+    const row = state.admobRows[idx];
+    const r = await adminFetch("/api/admob/admin/update", {
+      method: "POST",
+      body: JSON.stringify({
+        adKey: row.key,
+        appId: row.appId,
+        unitId: row.unitId,
+        isEnabled: row.isEnabled,
+      }),
+    });
+    if (r.ok) alert(row.label + " kaydedildi.");
+    else alert("Hata: " + (r.error || r.status));
+  }
+
+  async function refreshAdmin() {
+    renderServices();
+    updateServicesSub();
+    await Promise.all([
+      fetchTelemetry(),
+      fetchCoupleStats(),
+      fetchGame(),
+      fetchPremium(),
+      fetchLegal(),
+      fetchAdmob(),
+      testApi(),
+      testCf(getBaseUrl()),
+      testFirebase(),
+    ]);
+  }
+
+  function openAdmin() {
+    if (!loadAdminSession() || !loadPin()) {
+      document.getElementById("pin-overlay").classList.add("open");
+      return;
+    }
+    document.body.classList.remove("allow-select");
+    document.getElementById("landing").classList.add("hidden");
+    document.getElementById("admin-panel").classList.add("open");
+    document.getElementById("admin-panel").setAttribute("aria-hidden", "false");
+    refreshAdmin();
+    if (telemetryPoll) clearInterval(telemetryPoll);
+    telemetryPoll = setInterval(function () {
+      fetchTelemetry();
+      fetchCoupleStats();
+    }, 30000);
+  }
+
+  function closeAdmin() {
+    document.body.classList.add("allow-select");
+    document.getElementById("landing").classList.remove("hidden");
+    document.getElementById("admin-panel").classList.remove("open");
+    document.getElementById("admin-panel").setAttribute("aria-hidden", "true");
+    if (telemetryPoll) {
+      clearInterval(telemetryPoll);
+      telemetryPoll = null;
+    }
+  }
+
+  function onSecretTap() {
+    if (adminTapTimer) clearTimeout(adminTapTimer);
+    adminTapCount++;
+    if (adminTapCount >= ADMIN_TAP_TARGET) {
+      adminTapCount = 0;
+      if (loadAdminSession() && loadPin()) {
+        openAdmin();
+        return;
+      }
+      var hint = document.getElementById("pin-attempt-hint");
+      if (isPinLocked()) {
+        if (hint) {
+          hint.style.display = "block";
+          hint.textContent = "Çok fazla deneme. " + pinLockRemainingMin() + " dakika bekleyin.";
+        }
+        return;
+      }
+      if (hint) { hint.style.display = "none"; hint.textContent = ""; }
+      document.getElementById("pin-overlay").classList.add("open");
+      document.getElementById("pin-input").value = "";
+      document.getElementById("pin-input").focus();
+      return;
+    }
+    adminTapTimer = setTimeout(function () { adminTapCount = 0; }, ADMIN_TAP_MS);
+  }
+
+  async function submitPin() {
+    if (isPinLocked()) {
+      alert("Çok fazla deneme. " + pinLockRemainingMin() + " dakika sonra tekrar deneyin.");
+      return;
+    }
+    var v = document.getElementById("pin-input").value.trim();
+    if (!/^[0-9]{4,6}$/.test(v)) {
+      alert("4–6 haneli rakam girin.");
+      return;
+    }
+    var btn = document.getElementById("pin-submit");
+    var hint = document.getElementById("pin-attempt-hint");
+    btn.disabled = true;
+  try {
+      var base = getBaseUrl();
+      var res = await fetch(base + "/api/admob/admin/web-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: v }),
+      });
+      if (!res.ok) {
+        recordPinFail();
+        var err = await res.json().catch(function () { return {}; });
+        var left = PIN_MAX_ATTEMPTS;
+        try {
+          var att = JSON.parse(sessionStorage.getItem(PIN_ATTEMPTS_KEY) || "{}");
+          if (att && att.n) left = Math.max(0, PIN_MAX_ATTEMPTS - att.n);
+        } catch (e) { /* */ }
+        if (isPinLocked()) {
+          document.getElementById("pin-overlay").classList.remove("open");
+          alert("Çok fazla hatalı deneme. " + pinLockRemainingMin() + " dakika kilitlendi.");
+          return;
+        }
+        if (hint) {
+          hint.style.display = "block";
+          hint.textContent = (err.error || "Hatalı PIN") + (left > 0 ? " · Kalan deneme: " + left : "");
+        } else {
+          alert(err.error || "Hatalı PIN");
+        }
+        document.getElementById("pin-input").value = "";
+        return;
+      }
+      var data = await res.json();
+      if (!data || !data.token) {
+        alert("Oturum oluşturulamadı.");
+        return;
+      }
+      savePinLocal(v);
+      saveAdminSession(data.token, data.ttlSec || 3600);
+      clearPinFails();
+      if (hint) { hint.style.display = "none"; hint.textContent = ""; }
+      document.getElementById("pin-overlay").classList.remove("open");
+      openAdmin();
+    } catch (e) {
+      alert("Sunucuya ulaşılamadı.");
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* Accordions */
+  document.querySelectorAll(".acc-h").forEach(function (btn) {
+    btn.onclick = function () {
+      const acc = btn.closest(".acc");
+      acc.classList.toggle("open");
+    };
+  });
+
+  document.getElementById("year").textContent = new Date().getFullYear();
+  var vf = document.getElementById("version-foot");
+  vf.onclick = onSecretTap;
+  vf.removeAttribute("title");
+  loadAdminSession();
+  document.getElementById("pin-cancel").onclick = function () {
+    document.getElementById("pin-overlay").classList.remove("open");
+  };
+  document.getElementById("pin-submit").onclick = submitPin;
+  document.getElementById("pin-input").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") submitPin();
+  });
+  document.getElementById("admin-close").onclick = closeAdmin;
+  document.getElementById("admin-refresh").onclick = refreshAdmin;
+  document.getElementById("issue-cancel").onclick = function () {
+    document.getElementById("issue-overlay").classList.remove("open");
+  };
+  document.getElementById("issue-submit").onclick = issueCode;
+
+  updateLegalLinks();
+  renderServices();
+
+  /* Public legal email from API */
+  fetch(getBaseUrl() + "/api/legal")
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d) return;
+      const legal = d.legal || d;
+      if (legal.support_email) {
+        document.getElementById("support-link").href = "mailto:" + legal.support_email;
+        document.getElementById("support-link").textContent = "Destek: " + legal.support_email;
+      }
+    })
+    .catch(function () { /* default */ });
+})();
+  </script>
+</body>
+</html>
